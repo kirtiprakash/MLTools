@@ -73,6 +73,9 @@ function scatter(canvas,pts){
 function progressBar(id,pct,color){const e=$(id);e.style.width=clamp(pct,0,100)+'%';e.style.background=color;}
 function renderSplit(){
  $('split-label').textContent=s.train+'% train · '+s.validation+'% validation · '+(100-s.train-s.validation)+'% test';
+ $('flow-train').style.width=s.train+'%';
+ $('flow-validation').style.width=s.validation+'%';
+ $('flow-test').style.width=(100-s.train-s.validation)+'%';
  for(const [key,name] of [['train','Training'],['validation','Validation'],['test','Test']]){
   const list=split[key],c=counts(list),pct=c.total?Math.round(c.minority/c.total*100):0;
   $('num-'+key).textContent=c.total;
@@ -110,9 +113,11 @@ function accuracy(train,valid,k){
 function foldBuckets(train){
  const r=rng(s.seed+713),bucket=Array.from({length:s.folds},()=>[]);
  if(s.foldType==='stratified'){
+  let offset=0;
   for(const label of [0,1]){
    const shuffled=shuffle(train.filter(p=>p.label===label),r);
-   shuffled.forEach((p,i)=>bucket[i%s.folds].push(p));
+   shuffled.forEach((p,i)=>bucket[(i+offset)%s.folds].push(p));
+   offset=(offset+shuffled.length)%s.folds;
   }
  }else{
   shuffle(train,r).forEach((p,i)=>bucket[i%s.folds].push(p));
@@ -222,12 +227,12 @@ function buildCode(){
 '# Hold out the test set BEFORE tuning any hyperparameters.',
 'X_build, X_test, y_build, y_test = train_test_split(',
 '    X, y, test_size='+fmt(test/100,3)+', random_state='+s.seed+',',
-'    stratify=y' +(strat?'':' if False else None')+')',
+'    stratify='+(strat?'y':'None')+')',
 '# Split the remaining samples into training and validation sets.',
 'X_train, X_val, y_train, y_val = train_test_split(',
 '    X_build, y_build, test_size='+fmt(s.validation/(s.train+s.validation),4)+',',
 '    random_state='+s.seed+',',
-'    stratify=y_build'+(strat?'':' if False else None')+')',
+'    stratify='+(strat?'y_build':'None')+')',
 '',
 '# Keep scaling inside a Pipeline to avoid leakage between folds.',
 'pipeline = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors='+s.modelK+'))',
