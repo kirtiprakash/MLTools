@@ -94,6 +94,9 @@ function renderSplit(){
  $('split-seed-label').textContent='Seed: '+s.seed;
  const a=counts(split.train),b=counts(split.validation),c=counts(split.test);
  $('split-difference').textContent='Rare-class proportions: '+fmt(a.minority/a.total*100,1)+'% / '+fmt(b.minority/b.total*100,1)+'% / '+fmt(c.minority/c.total*100,1)+'% (train / validation / test).';
+ $('rare-warning').textContent=[a,b,c].some(group=>group.minority===0)
+  ? 'One or more subsets contain no rare-class examples. With very few rare observations, even stratification cannot guarantee a representative sample in every subset. Increase the dataset size or reconsider the evaluation design.'
+  : '';
 }
 function nearest(train,point,k){
  return train.map(p=>({p,d:(p.x-point.x)**2+(p.y-point.y)**2}))
