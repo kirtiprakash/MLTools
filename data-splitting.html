@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Interactive machine learning tutorial: training validation test splits, random versus stratified sampling, K-fold cross-validation, data leakage, and reproducible Python code.">
+<title>Data Splitting & Validation | MLTools Interactive Laboratory</title>
+<link rel="stylesheet" href="data-splitting.css">
+</head>
+<body>
+<header class="hero">
+  <div class="hero-body">
+    <div class="brandbar"><a class="brand" href="./">◈ MLTools / OPEN TEACHING LABORATORY</a><a class="back" href="./">← All interactive labs</a></div>
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Week 02 · Experimental design</span>
+        <h1>Data splitting, explained by experimenting.</h1>
+        <p class="lead">A machine learning model can score brilliantly on data it has already seen. But will it succeed on new examples? Split the data, change the rules, and discover what makes an evaluation trustworthy.</p>
+        <div class="hero-cta"><a href="#playground">Open the splitting playground ↓</a><a class="secondary" href="#cross-validation">Try cross-validation</a></div>
+      </div>
+      <aside class="hero-art" aria-label="Illustrative training validation test split">
+        <div class="art-title">One dataset · Three different jobs</div>
+        <div class="art-bar"><span class="a">Train 60%</span><span class="b">Val 20%</span><span class="c">Test 20%</span></div>
+        <p class="art-caption"><strong>Train</strong> to learn. <strong>Validate</strong> to choose. <strong>Test</strong> once to estimate generalisation.</p>
+        <div class="hero-formula">Training ≠ validation ≠ final testing</div>
+      </aside>
+    </div>
+  </div>
+</header>
+<nav aria-label="Learning sections">
+ <a href="#intuition">01 · Intuition</a><a href="#playground">02 · Splitting lab</a><a href="#cross-validation">03 · K-fold</a><a href="#leakage">04 · Leakage</a><a href="#reproducible">05 · Python</a><a href="#challenge">06 · Challenges</a>
+</nav>
+<main>
+<section id="intuition">
+  <span class="tag">01 / Begin with the question</span>
+  <h2>Why not train and test on the same observations?</h2>
+  <p>Imagine preparing for an examination by memorising last year's answers. You might score 100% when the same questions reappear. But that does not tell us how well you understand <em>new</em> questions. Machine-learning models face exactly this problem.</p>
+  <div class="steps">
+    <article class="step"><span class="step-num">STEP 1 · LEARN</span><h3>Training set</h3><p>The model learns patterns from these examples. Its parameters are estimated here.</p></article>
+    <article class="step"><span class="step-num">STEP 2 · CHOOSE</span><h3>Validation set</h3><p>Compare modelling choices, such as K in KNN, without making decisions based on final test results.</p></article>
+    <article class="step"><span class="step-num">STEP 3 · EXAMINE</span><h3>Test set</h3><p>An untouched final check of how the chosen model performs on unseen examples.</p></article>
+  </div>
+  <div class="eq">N = N<sub>train</sub> + N<sub>validation</sub> + N<sub>test</sub><small>Each observation belongs to just one set in a standard hold-out split. The percentages describe shares of the available examples, not a universal recommended ratio.</small></div>
+  <div class="callout"><strong>Try before you read further:</strong> Would you prefer 60/20/20 or 80/10/10? There is no universal answer. More training data helps fitting, while sufficiently large validation and test sets are needed for reliable estimates.</div>
+</section>
+
+<section id="playground">
+  <span class="tag">02 / Interactive splitting laboratory</span>
+  <h2>Divide one dataset three ways</h2>
+  <p>These are <strong>synthetic flower measurements</strong> from two overlapping species. Blue represents the common class; coral represents the rarer class. Change the class balance, split percentages, sampling method or random seed. The plots redraw using the same underlying labelled examples until you change the dataset controls.</p>
+  <div class="lab-grid">
+    <div>
+      <h3>Live allocation</h3>
+      <p id="split-label" style="font-weight:800">60% train · 20% validation · 20% test</p>
+      <div class="split-flow" role="img" aria-label="Proportions of the total dataset assigned to training, validation and testing">
+        <div id="flow-train" class="train" style="width:60%">Train</div>
+        <div id="flow-validation" class="validation" style="width:20%">Validate</div>
+        <div id="flow-test" class="test" style="width:20%">Test</div>
+      </div>
+      <div class="metric-row">
+       <div class="metric"><small>Total observations</small><strong id="total-label">150</strong></div>
+       <div class="metric"><small>Minority proportion overall</small><strong id="target-minority">20%</strong></div>
+       <div class="metric"><small>Allocation verification</small><strong id="sums-check" style="font-size:15px">150 / 150</strong></div>
+      </div>
+      <div class="class-legend"><span><i class="dot blue"></i> Common flower class</span><span><i class="dot coral"></i> Rare flower class</span></div>
+      <div class="datasets">
+       <article class="dataset-card train"><h3>Training <span>learn patterns</span></h3><div><strong class="card-stat" id="num-train">90</strong> <small>observations</small></div><canvas id="scatter-train" role="img" aria-label="Training set scatterplot"></canvas><div class="stat-small">Rare-class share: <strong id="rare-train">20%</strong></div><div class="bar-track"><div class="bar-fill" id="bar-train" style="width:20%"></div></div><div class="stat-small" id="count-train">72 common · 18 rare</div></article>
+       <article class="dataset-card validation"><h3>Validation <span>choose settings</span></h3><div><strong class="card-stat" id="num-validation">30</strong> <small>observations</small></div><canvas id="scatter-validation" role="img" aria-label="Validation set scatterplot"></canvas><div class="stat-small">Rare-class share: <strong id="rare-validation">20%</strong></div><div class="bar-track"><div class="bar-fill" id="bar-validation" style="width:20%"></div></div><div class="stat-small" id="count-validation">24 common · 6 rare</div></article>
+       <article class="dataset-card test"><h3>Testing <span>final evaluation</span></h3><div><strong class="card-stat" id="num-test">30</strong> <small>observations</small></div><canvas id="scatter-test" role="img" aria-label="Test set scatterplot"></canvas><div class="stat-small">Rare-class share: <strong id="rare-test">20%</strong></div><div class="bar-track"><div class="bar-fill" id="bar-test" style="width:20%"></div></div><div class="stat-small" id="count-test">24 common · 6 rare</div></article>
+      </div>
+      <p id="split-explainer" class="callout">Compare stratified and random sampling.</p>
+      <p id="split-difference" class="muted" style="font-size:14px"></p>
+    </div>
+    <div class="controls">
+      <label class="whole" for="n-slider">Number of examples: <output id="n-output">150</output>
+        <input id="n-slider" type="range" min="90" max="300" step="10" value="150">
+        <small class="ctrl-sub">More examples help stabilize percentages.</small>
+      </label>
+      <label class="whole" for="minority-slider">Rare-class proportion: <output id="minority-output">20%</output>
+        <input id="minority-slider" type="range" min="5" max="50" step="5" value="20">
+        <small class="ctrl-sub">Try 5% and compare random with stratified.</small>
+      </label>
+      <label for="train-slider">Training share: <output id="train-output">60%</output>
+        <input id="train-slider" type="range" min="50" max="80" step="5" value="60">
+      </label>
+      <label for="validation-slider">Validation share: <output id="validation-output">20%</output>
+        <input id="validation-slider" type="range" min="10" max="30" step="5" value="20">
+      </label>
+      <div class="whole" style="margin-top:-7px;margin-bottom:15px;font-size:14px">Remaining test share: <strong id="test-output">20%</strong></div>
+      <label for="split-method">How to select the examples
+        <select id="split-method"><option value="random">Random split</option><option value="stratified">Stratified split (preserve classes)</option></select>
+      </label>
+      <label for="seed-input">Random seed
+        <input id="seed-input" type="number" min="0" max="999999" value="42">
+        <small class="ctrl-sub" id="split-seed-label">Seed: 42</small>
+      </label>
+      <div class="btn-row whole"><button id="reshuffle" type="button" class="primary">Reshuffle with new seed</button><button id="reset-all" type="button">Reset</button><button id="export-csv" type="button">Download CSV ↓</button></div>
+      <p class="ctrl-sub whole" style="margin-top:15px">Data points are generated locally; no files are uploaded to a server. Download CSV includes each observation's current assigned set.</p>
+    </div>
+  </div>
+  <div class="method-grid">
+    <div class="info-card"><h3>Random split</h3><p>Every observation is shuffled into a set without explicitly preserving class proportions. Rare classes can be unevenly distributed, especially in small datasets.</p></div>
+    <div class="info-card"><h3>Stratified split</h3><p>Split each label so each subset approximately matches the original class proportions. This is often useful for imbalanced classification, but does not solve dependencies between related records.</p></div>
+  </div>
+</section>
+
+<section id="cross-validation">
+  <span class="tag">03 / More reliable model selection</span>
+  <h2>K-Fold cross-validation: every example gets a turn</h2>
+  <p>A single validation split can be unrepresentative. K-fold cross-validation repeatedly divides the <strong>training pool</strong> into K parts: fit on K−1 parts and validate on the remaining part. Rotate the held-out part and average the scores.</p>
+  <div class="eq">CV score = (score<sub>1</sub> + score<sub>2</sub> + … + score<sub>K</sub>) / K<small>Each score comes from a model fitted without access to that fold's validation examples. These folds use the training set from the experiment above, not the untouched test set.</small></div>
+  <div class="method-grid">
+    <div>
+      <div class="btn-row" style="margin-bottom:12px">
+        <label for="folds-slider" style="flex:1;min-width:160px;font-weight:700">Number of folds = <output id="folds-output">5</output>
+        <input id="folds-slider" type="range" min="3" max="10" step="1" value="5" style="display:block;width:100%;accent-color:var(--teal)"></label>
+        <label for="foldtype" style="flex:1;min-width:160px;font-weight:700">Fold strategy
+          <select id="foldtype" style="display:block;width:100%;border-radius:8px;padding:9px;border:1px solid #bacbd2"><option value="stratified">Stratified K-Fold</option><option value="plain">Ordinary K-Fold</option></select>
+        </label>
+      </div>
+      <div class="legend-row"><span><i class="legend-box" style="background:var(--teal)"></i> Used for training</span><span><i class="legend-box" style="background:var(--gold)"></i> Used for validation</span></div>
+      <p class="muted" style="font-size:13px"><strong id="cv-method">Stratified K-Fold</strong> · selected fold <strong id="cv-fold-number">1 / 5</strong></p>
+      <div class="fold-grid" id="cv-grid" aria-label="Click each fold to inspect its training and validation arrangement"></div>
+      <div class="btn-row"><button id="previous-fold" type="button">← Previous fold</button><button class="primary" id="next-fold" type="button">Next fold →</button></div>
+      <p id="fold-interpretation" class="callout">The selected fold will be described here.</p>
+    </div>
+    <div>
+      <div class="info-card" style="background:#f5fbfc">
+        <h3>Run an actual classifier</h3>
+        <p class="muted" style="font-size:14px">We use KNN to predict the flower label. Its number of neighbours is a separate setting from the number of CV folds.</p>
+        <label for="model-k" style="font-weight:750">KNN neighbours
+          <select id="model-k" style="display:block;width:100%;padding:10px;border-radius:8px;border:1px solid #b5cbd2;margin:7px 0"><option value="1">1 neighbour</option><option value="3" selected>3 neighbours</option><option value="5">5 neighbours</option><option value="7">7 neighbours</option><option value="11">11 neighbours</option></select></label>
+        <div class="metric-row">
+          <div class="metric"><small>Mean CV accuracy</small><strong id="cv-mean">…</strong></div>
+          <div class="metric"><small>Fold accuracy range</small><strong id="cv-range" style="font-size:18px">…</strong></div>
+          <div class="metric"><small>Separate validation score</small><strong id="val-score">…</strong></div>
+        </div>
+        <p id="cv-equation" class="muted" style="font-size:13px;overflow-wrap:anywhere"></p>
+        <p class="muted" style="font-size:13px">Currently evaluating <span id="modelk-label">3</span>-NN with <span id="fold-count-label">5</span> folds. Try varying neighbours and compare the validation scores.</p>
+      </div>
+    </div>
+  </div>
+  <div class="callout gold">
+    <h3>Final examination: keep the test set sealed</h3>
+    <p>Once you have selected a model using training/validation results, refit using both training and validation examples. Only then reveal the untouched test accuracy. After seeing it, do not repeatedly tune the model to improve that score.</p>
+    <button id="test-reveal" class="primary" type="button">🔒 Reveal final test score</button>
+    <div class="locked" id="test-result" aria-live="polite" style="margin-top:13px">Locked until you deliberately reveal it.</div>
+    <p class="muted" style="font-size:12px;margin-bottom:0">This demonstration uses a fixed choice of KNN neighbours selected above; it is not a full nested cross-validation study. Changing the experiment resets the test lock.</p>
+  </div>
+</section>
+
+<section id="leakage">
+ <span class="tag">04 / The trap that inflates accuracy</span>
+ <h2>Data leakage: when the test already knows the answer</h2>
+ <p>Imagine having four very similar measurements from each person. Each person's label is randomly assigned and <strong>cannot be learned from genuinely new people's features</strong>. If we randomly split individual measurements, copies of the same person will appear in training and testing. The model can recognise those copies.</p>
+ <div class="leak-grid">
+  <article class="leak-card problem"><h3>Random row split</h3><small>Repeated records from the same person may appear on both sides.</small><strong id="leaky-accuracy">…</strong><div class="leak-bar"><div class="leak-fill" id="leaky-bar" style="background:var(--coral);width:0%"></div></div><small>Misleadingly high accuracy for the goal of predicting new people</small></article>
+  <article class="leak-card safe"><h3>Group-aware split</h3><small>Each person belongs entirely to training or testing, never both.</small><strong id="honest-accuracy">…</strong><div class="leak-bar"><div class="leak-fill" id="honest-bar" style="background:var(--teal);width:0%"></div></div><small>More credible estimate for previously unseen people</small></article>
+ </div>
+ <p class="callout coral">In this example, <strong id="duplicate-count">…</strong> test observations in the random row split come from subjects already represented during training.</p>
+ <p class="muted" id="leakage-note" style="font-size:14px"></p>
+ <div class="info-card"><h3>Other common leakage problems</h3><p>Scaling with statistics from all rows before splitting; selecting features using test labels; allowing future measurements into a time-series predictor; and evaluating repeated observations of the same person as independent unseen cases.</p></div>
+ <div class="eq">Correct workflow: split → fit preprocessing on training only → apply to validation/test → evaluate<small>For cross-validation, fit preprocessing separately inside each training fold. Scikit-learn Pipelines make this easier to implement safely.</small></div>
+</section>
+
+<section id="reproducible">
+ <span class="tag">05 / Reproduce the experiment in Python</span>
+ <h2>From interactive sliders to Google Colab</h2>
+ <p>Download the labelled CSV from Section 02. Upload it in <a href="https://colab.research.google.com/" target="_blank" rel="noopener noreferrer">Google Colab</a>, then run the code below. It performs two held-out splits, evaluates KNN using cross-validation with train-only scaling, and runs a final untouched test after model choice.</p>
+ <div class="codebar"><p class="muted" style="font-size:14px">Annotated scikit-learn code reflects your current split percentages, seed and model settings.</p><button class="primary" type="button" id="copy-code">Copy Python code</button></div>
+ <pre><code id="python-code"># The notebook-ready code is generated from the controls.</code></pre>
+ <p id="code-note" class="muted" style="font-size:13px"></p>
+ <div class="callout"><strong>Reproducibility:</strong> a fixed random seed makes repeated experiments repeatable within the same implementation. Report the seed and split method, but remember that reproducibility is not the same as generalisation.</div>
+</section>
+
+<section id="challenge">
+ <span class="tag">06 / Predict, test, explain</span>
+ <h2>Five questions to ask students</h2>
+ <p>Make a prediction before changing any control. Then open the explanation and compare it with what you observed.</p>
+ <details class="exercise"><summary>Q1 · Why might a 90/5/5 split be unreliable for a small dataset?</summary><p>The training set is large, but the validation and test subsets could be too small for stable performance estimates, especially for rare classes. There is no universal best ratio.</p></details>
+ <details class="exercise"><summary>Q2 · What does stratification preserve, and what does it not fix?</summary><p>Stratification aims to preserve class proportions. It does not prevent data leakage caused by duplicated subjects, groups, chronological dependencies or preprocessing fitted on the full dataset.</p></details>
+ <details class="exercise"><summary>Q3 · Are KNN's K and K-fold's K the same thing?</summary><p>No. KNN's K is the number of nearest labelled neighbours used for a prediction. K-fold's K is the number of subsets used for repeated training and validation.</p></details>
+ <details class="exercise"><summary>Q4 · Why is 100% training accuracy not enough?</summary><p>A model may simply memorise the training data. Accuracy on observations that were not available during fitting is needed to evaluate generalisation.</p></details>
+ <details class="exercise"><summary>Q5 · Can we keep changing K until the final test accuracy is highest?</summary><p>No. Repeatedly selecting based on the test set makes it part of the model-selection process. Use validation or cross-validation for tuning and keep a final test set untouched.</p></details>
+</section>
+</main>
+<footer class="footer">MLTools · Interactive Machine Learning Laboratory · All teaching data are synthetic · <a href="./">Explore all labs</a> · <a href="https://kirtiprakash.github.io/aru-cjlu-ai-2026/modules/advanced-machine-learning.html">Back to course portal</a></footer>
+<script src="data-splitting.js"></script>
+</body>
+</html>
