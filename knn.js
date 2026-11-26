@@ -10,7 +10,7 @@ const CONFIG = {
 };
 let type='flowers', points=[], query=[], serial=0, version=0, reveal=0, dragging=false;
 let boundaryCache=null, looCache=null, modelSnapshot=null;
-const state={k:5,metric:'euclidean',scaling:'standard',weights:'uniform',boundary:true,rings:true,mode:'query'};
+const state={k:5,metric:'euclidean',scaling:'standard',weights:'uniform',boundary:true,rings:true,mode:'query',labelNoise:8};
 const rnd=seed=>()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/4294967296;};
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 const fmt=(n,d=2)=>Number(n).toFixed(d);
@@ -19,8 +19,9 @@ function dataset(which){
  if(which==='flowers'){
   for(let i=0;i<50;i++){
    const label=i<25?0:1;
-   const x=label===0?5.1+(r()+r()-1)*0.9:6.2+(r()+r()-1)*1.25;
-   const y=label===0?0.40+(r()+r()-1)*0.42:1.72+(r()+r()-1)*0.86;
+   // Deliberately overlapping synthetic classes to reveal underfitting and overfitting.
+   const x=(label===0?5.15:6.15)+(r()+r()-1)*1.4;
+   const y=(label===0?0.84:1.42)+(r()+r()-1)*1.1;
    p.push({x:clamp(x,4.1,7.9),y:clamp(y,0.06,2.5),label,id:i});
   }
  } else if(which==='patients'){
@@ -37,6 +38,15 @@ function dataset(which){
    p.push({x,y,label,id:i});
   }
  }
+ // Inject a controlled amount of label noise. Positions stay identical across settings.
+ // A separate seeded shuffle means changing noise affects labels, not the geometry.
+ const noiseRnd=rnd(c.seed+921),indices=Array.from({length:p.length},(_,i)=>i);
+ for(let i=indices.length-1;i>0;i--){
+  const j=Math.floor(noiseRnd()*(i+1));
+  [indices[i],indices[j]]=[indices[j],indices[i]];
+ }
+ const corrupted=Math.round(p.length*state.labelNoise/100);
+ for(let i=0;i<corrupted;i++)p[indices[i]].label=1-p[indices[i]].label;
  return p;
 }
 function featureStats(train){
@@ -172,36 +182,75 @@ function updateReadout(full,active,stats){
 function looScores(){
  const key=[version,type,state.metric,state.scaling,state.weights].join('|');
  if(looCache&&looCache.key===key)return looCache;
- const maximum=Math.min(25,points.length-1),scores=[];
- for(let k=1;k<=maximum;k++){
-  let hits=0;
-  for(let i=0;i<points.length;i++){
-   const train=points.filter((_,j)=>i!==j);
-   const pred=prediction([points[i].x,points[i].y],k,train,featureStats(train)).pred;
-   if(pred===points[i].label)hits++;
+ const maximum=Math.min(25,points.length-1);
+ const validHits=Array(maximum).fill(0),trainHits=Array(maximum).fill(0);
+ const trainingStats=featureStats(points);
+ for(let i=0;i<points.length;i++){
+  const p=points[i],other=points.filter((_,j)=>i!==j);
+  // No leakage: scale every held-out point using statistics from the other rows.
+  const neighbors=closest(p,other,maximum,featureStats(other));
+  const trainNeighbors=closest(p,points,maximum,trainingStats);
+  for(let k=1;k<=maximum;k++){
+   if(vote(neighbors.slice(0,k)).pred===p.label)validHits[k-1]++;
+   if(vote(trainNeighbors.slice(0,k)).pred===p.label)trainHits[k-1]++;
   }
-  scores.push(hits/points.length);
  }
- let best=0;for(let i=1;i<scores.length;i++)if(scores[i]>scores[best]+1e-10)best=i;
- looCache={key,scores,best:best+1};return looCache;
+ const scores=validHits.map(n=>n/points.length);
+ const training=trainHits.map(n=>n/points.length);
+ let best=0;
+ for(let i=1;i<scores.length;i++)if(scores[i]>scores[best]+1e-10)best=i;
+ looCache={key,scores,training,best:best+1};
+ return looCache;
 }
 function renderValidation(){
- const cv=$('validation-plot'),{ctx,w,h}=resizeCanvas(cv),data=looScores(),s=data.scores;
+ const cv=$('validation-plot'),{ctx,w,h}=resizeCanvas(cv),data=looScores();
+ const s=data.scores,train=data.training,maxK=s.length;
  ctx.clearRect(0,0,w,h);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
- const l=43,r=18,t=21,b=42,bot=h-b,hi=Math.max(0.55,Math.min(1,Math.ceil(Math.max(...s)*10)/10)),lo=Math.max(0,Math.floor(Math.min(...s)*10)/10-.05);
- const X=i=>l+(i-1)/(s.length-1)*(w-l-r),Y=a=>bot-(a-lo)/(hi-lo)*(bot-t);
- ctx.strokeStyle='#d7e2e8';ctx.font='11px system-ui,sans-serif';ctx.fillStyle='#576d7a';
- for(let i=0;i<=4;i++){const y=lo+(hi-lo)*i/4;ctx.beginPath();ctx.moveTo(l,Y(y));ctx.lineTo(w-r,Y(y));ctx.stroke();ctx.textAlign='right';ctx.fillText(Math.round(y*100)+'%',l-7,Y(y)+4);}
- ctx.textAlign='center';for(const k of [1,5,10,15,20,25].filter(i=>i<=s.length))ctx.fillText(String(k),X(k),bot+19);
- ctx.fillText('K (number of neighbours)',(l+w-r)/2,h-6);
- ctx.beginPath();s.forEach((a,i)=>i?ctx.lineTo(X(i+1),Y(a)):ctx.moveTo(X(i+1),Y(a)));ctx.strokeStyle='#167b9a';ctx.lineWidth=2.5;ctx.stroke();
- ctx.fillStyle='#167b9a';s.forEach((a,i)=>{ctx.beginPath();ctx.arc(X(i+1),Y(a),2.3,0,Math.PI*2);ctx.fill();});
- if(state.k<=s.length){ctx.strokeStyle='#e26b54';ctx.lineWidth=1.6;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(X(state.k),t);ctx.lineTo(X(state.k),bot);ctx.stroke();ctx.setLineDash([]);}
- ctx.beginPath();ctx.arc(X(data.best),Y(s[data.best-1]),6,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#207353';ctx.lineWidth=2.7;ctx.stroke();
+ const l=49,r=18,t=24,b=47,bot=h-b;
+ // Keep at least 50%–100% visible, avoiding misleading almost-zero y-ranges.
+ const minimum=Math.min(...s,...train);
+ const lo=Math.min(.50,Math.max(0,Math.floor((minimum-.05)*10)/10));
+ const hi=1;
+ const X=k=>l+(k-1)/Math.max(1,maxK-1)*(w-l-r);
+ const Y=a=>bot-(a-lo)/(hi-lo)*(bot-t);
+ ctx.font='11px system-ui,sans-serif';ctx.textAlign='right';
+ for(let i=0;i<=5;i++){
+  const v=lo+(hi-lo)*i/5;
+  ctx.strokeStyle='#d9e4e8';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(l,Y(v));ctx.lineTo(w-r,Y(v));ctx.stroke();
+  ctx.fillStyle='#536879';ctx.fillText(Math.round(v*100)+'%',l-8,Y(v)+4);
+ }
+ ctx.textAlign='center';ctx.fillStyle='#536879';
+ for(const k of [1,5,10,15,20,25].filter(v=>v<=maxK))ctx.fillText(String(k),X(k),bot+18);
+ ctx.fillText('K (number of neighbours) · Click a K to try it',w/2,h-7);
+ function curve(values,color){
+  ctx.beginPath();
+  values.forEach((v,i)=>i?ctx.lineTo(X(i+1),Y(v)):ctx.moveTo(X(i+1),Y(v)));
+  ctx.strokeStyle=color;ctx.lineWidth=2.8;ctx.stroke();
+  ctx.fillStyle=color;
+  values.forEach((v,i)=>{ctx.beginPath();ctx.arc(X(i+1),Y(v),2.5,0,Math.PI*2);ctx.fill();});
+ }
+ curve(train,'#167b9a');curve(s,'#e26b54');
+ if(state.k<=maxK){
+  ctx.strokeStyle='#697a8b';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(X(state.k),t);ctx.lineTo(X(state.k),bot);ctx.stroke();ctx.setLineDash([]);
+ }
+ ctx.beginPath();ctx.arc(X(data.best),Y(s[data.best-1]),6.5,0,Math.PI*2);
+ ctx.fillStyle='white';ctx.fill();ctx.strokeStyle='#257b4b';ctx.lineWidth=3;ctx.stroke();
  $('best-k').textContent=data.best;
  $('best-score').textContent=fmt(s[data.best-1]*100,1)+'%';
- $('current-score').textContent=state.k<=s.length?fmt(s[state.k-1]*100,1)+'%':'Not shown (K > 25)';
+ $('current-score').textContent=state.k<=maxK?fmt(s[state.k-1]*100,1)+'%':'Choose K ≤ '+maxK+' to compare';
+ $('cv-reading').textContent='With K = 1, training accuracy is '+fmt(train[0]*100,0)+'% while leave-one-out accuracy is '+fmt(s[0]*100,0)+'%. The highest observed leave-one-out accuracy is '+fmt(s[data.best-1]*100,0)+'% at K = '+data.best+'. A high training score alone does not establish generalization.';
+ $('noise-output').textContent=state.labelNoise+'%';
 }
+// Chart interaction: choose K by clicking the validation curve.
+$('validation-plot').addEventListener('click',e=>{
+ const r=e.currentTarget.getBoundingClientRect();
+ const l=49,right=18,maxK=looScores().scores.length;
+ const k=clamp(Math.round(1+(e.clientX-r.left-l)/Math.max(1,r.width-l-right)*(maxK-1)),1,maxK);
+ state.k=k;$('k').value=k;redrawCurrent();
+});
+
 function updateCode(){
  const c=CONFIG[type],standard=state.scaling==='standard',metric=state.metric,weights=state.weights;
  const lines=[
@@ -262,6 +311,7 @@ function reset(which=type){
  $('mouse-mode').value='query';$('x-name').textContent=CONFIG[type].xlabel;$('y-name').textContent=CONFIG[type].ylabel;
  $('legend-a').textContent=CONFIG[type].classes[0];$('legend-b').textContent=CONFIG[type].classes[1];
  $('clinical-note').hidden=type!=='patients';
+ $('noise').value=state.labelNoise;
  update();
 }
 function redrawCurrent(){
@@ -273,6 +323,7 @@ function alterQuery(x,y){
  reveal=0;render();updateCode();
 }
 $('example').addEventListener('change',e=>reset(e.target.value));
+$('noise').addEventListener('input',e=>{state.labelNoise=Number(e.target.value);points=dataset(type);serial=points.length;version++;update();});
 $('k').addEventListener('input',e=>{state.k=+e.target.value;redrawCurrent();});
 $('metric').addEventListener('change',e=>{state.metric=e.target.value;update();});
 $('scaling').addEventListener('change',e=>{state.scaling=e.target.value;update();});
