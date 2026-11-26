@@ -70,6 +70,7 @@
       </div>
       <p id="split-explainer" class="callout">Compare stratified and random sampling.</p>
       <p id="split-difference" class="muted" style="font-size:14px"></p>
+      <p id="rare-warning" class="muted" style="font-size:13px;color:#aa5b26" aria-live="polite"></p>
     </div>
     <div class="controls">
       <label class="whole" for="n-slider">Number of examples: <output id="n-output">150</output>
@@ -145,7 +146,7 @@
     <p>Once you have selected a model using training/validation results, refit using both training and validation examples. Only then reveal the untouched test accuracy. After seeing it, do not repeatedly tune the model to improve that score.</p>
     <button id="test-reveal" class="primary" type="button">🔒 Reveal final test score</button>
     <div class="locked" id="test-result" aria-live="polite" style="margin-top:13px">Locked until you deliberately reveal it.</div>
-    <p class="muted" style="font-size:12px;margin-bottom:0">This demonstration uses a fixed choice of KNN neighbours selected above; it is not a full nested cross-validation study. Changing the experiment resets the test lock.</p>
+    <p class="muted" style="font-size:12px;margin-bottom:0">This teaching page displays test labels in the scatterplot so you can understand how splitting works. In real model selection, do not use those labels to guide your choices. This is not a full nested cross-validation study. Changing the experiment resets the test lock.</p>
   </div>
 </section>
 
