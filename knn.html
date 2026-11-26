@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="An interactive, equation-first K-nearest neighbours (KNN) laboratory. Move a data point, change K, compare distances and explore Python code.">
+<title>K-Nearest Neighbours | MLTools Interactive Lab</title>
+<style>
+:root{--navy:#122b41;--teal:#167b9a;--coral:#e26b54;--ink:#243b4e;--muted:#5e7180;--paper:#f5f7f8;--border:#dbe5ea;--pale:#e8f2f4;--white:#fff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:#08758a}a:hover{text-decoration-thickness:2px}button,input,select{font:inherit}button{cursor:pointer;border-radius:9px;border:1px solid #b4c7d0;background:#fff;color:var(--ink);padding:9px 14px;font-weight:650}button:hover{border-color:var(--teal);background:#f0f8f8}button.primary{border-color:var(--teal);background:var(--teal);color:white}button.primary:hover{background:#0b637c}button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #f3aa48;outline-offset:2px}
+.hero{background:linear-gradient(115deg,#122b41 0%,#1a4351 74%,#215f69 100%);color:#fff;padding:26px max(4vw,20px) 46px}.hero-inner{max-width:1190px;margin:auto}.brandbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}.brand{color:#e3faf8;text-decoration:none;font-size:15px;font-weight:800;letter-spacing:.03em}.back{color:#c6e9e7;font-size:14px}.hero-grid{display:grid;grid-template-columns:1.65fr 1fr;gap:35px;align-items:center;margin-top:38px}.eyebrow{color:#9cded4;text-transform:uppercase;font-size:12px;letter-spacing:.17em;font-weight:800}.hero h1{font-size:clamp(36px,5.2vw,68px);letter-spacing:-.043em;line-height:1.08;margin:13px 0 18px;max-width:770px}.lead{font-size:clamp(17px,2vw,21px);line-height:1.5;color:#cce0e8;max-width:660px;margin:0 0 23px}.hero .actions{display:flex;gap:12px;flex-wrap:wrap}.hero .actions a{display:inline-block;padding:10px 17px;background:#f6fafb;border-radius:9px;color:#12364b;text-decoration:none;font-weight:750}.hero .actions a.secondary{background:transparent;border:1px solid #81a8b2;color:white}.hero-aside{padding:22px;background:#ffffff10;border:1px solid #a9d8d633;border-radius:18px;min-width:0}.mini-heading{font-weight:750;color:#d4f5ed;font-size:13px;letter-spacing:.08em;text-transform:uppercase}.mini-vote{display:flex;align-items:center;gap:12px;margin:18px 0 11px}.dot{display:inline-block;border-radius:50%;width:14px;height:14px;flex:none}.dot.a{background:var(--teal)}.dot.b{background:var(--coral)}.mini-dots{display:flex;gap:9px}.mini-dots i{display:block;width:25px;height:25px;border-radius:50%;border:2px solid #ffffffa0}.mini-caption{font-size:13px;color:#c7e2e6}.mini-eq{font:20px/1.4 Georgia,serif;letter-spacing:.01em;border-top:1px solid #a1c4c433;padding-top:14px;margin-top:15px;color:#fff}
+nav{position:sticky;top:0;z-index:10;display:flex;gap:7px;justify-content:center;flex-wrap:wrap;padding:11px 14px;border-bottom:1px solid var(--border);background:#ffffffed;backdrop-filter:blur(8px)}nav a{padding:6px 13px;border-radius:9px;color:#31505f;text-decoration:none;font-size:14px;font-weight:650}nav a:hover{background:#e6f2f3}
+main{max-width:1180px;margin:auto;padding:12px 20px 42px}section{margin:23px 0;padding:clamp(20px,3vw,35px);background:white;border:1px solid var(--border);border-radius:16px;scroll-margin-top:95px;box-shadow:0 6px 24px #112c4408}h2{font-size:clamp(23px,3vw,31px);letter-spacing:-.025em;line-height:1.28;margin:0 0 13px}h3{font-size:18px;line-height:1.25;margin:0 0 10px}p{margin:8px 0 15px}small,.muted{color:var(--muted)}.tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#167b7e;margin-bottom:7px}.callout{background:#eff6f6;border-left:4px solid #168194;padding:14px 17px;border-radius:8px;margin:16px 0}.note{background:#fdf7e8;border-left-color:#d09c44}.three-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}.step{border:1px solid #d9e5e8;border-radius:12px;padding:19px;background:#fcfefe}.step-num{font:800 13px/1.4 system-ui;color:var(--teal);letter-spacing:.09em}.step p{font-size:14px;margin:5px 0 0}.eq{background:#eff5f7;border-left:4px solid #14869a;padding:16px 19px;margin:15px 0;border-radius:7px;font:clamp(17px,2vw,24px)/1.6 Georgia,"Times New Roman",serif;overflow-wrap:anywhere}.eq small{font:13px/1.6 system-ui,sans-serif;display:block;margin-top:4px}
+.lab-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(275px,.9fr);gap:22px;align-items:start}.visual{min-width:0}.plot-wrap{padding:11px;background:#fff;border:1px solid var(--border);border-radius:12px}.plot-wrap canvas{display:block;width:100%;height:430px;touch-action:none;cursor:crosshair;max-width:100%;border-radius:8px}.caption{font-size:13px;color:var(--muted);margin:8px 5px 2px}.legend{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:12px 4px}.legend span{display:inline-flex;gap:7px;align-items:center;font-size:13px}.unknown{border-radius:50%;width:16px;height:16px;background:white;border:3px solid #172a40}.control-panel{background:#f8fafb;border:1px solid #dce8ea;border-radius:12px;padding:20px}.control-panel label{display:block;font-size:14px;font-weight:700;margin:0 0 14px}.control-panel select,.control-panel input[type=number]{display:block;width:100%;margin-top:5px;padding:8px 10px;border-radius:8px;border:1px solid #aec0cb;background:#fff;color:#193247}.control-panel input[type=range]{width:100%;margin-top:8px;accent-color:#167b9a}.control-panel .paired{display:grid;grid-template-columns:1fr 1fr;gap:10px}.control-panel .check{display:flex;align-items:center;gap:9px;font-weight:500;line-height:1.3}.control-panel input[type=checkbox]{accent-color:#0c8090;width:17px;height:17px}.control-panel hr{border:0;border-top:1px solid #d7e4e8;margin:18px 0}.button-row{display:flex;flex-wrap:wrap;gap:8px}.button-row button{font-size:13px;padding:8px 11px}.prediction-card{margin-top:15px;border:1px solid #dbe8ea;background:#fff;border-radius:12px;padding:19px}.prediction-top{display:flex;align-items:center;gap:12px}.prediction-swatch{width:17px;height:44px;border-radius:6px;flex:none}.prediction-name{font-size:clamp(21px,2.3vw,28px);font-weight:800;line-height:1.12}.prediction-sub{color:var(--muted);font-size:13px}.vote-row{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:9px;align-items:center;margin:12px 0}.vote-label{font-size:12px;display:flex;justify-content:space-between;gap:6px}.vote-track{height:9px;border-radius:6px;background:#e3e9eb;overflow:hidden;margin-top:5px}.vote-fill{height:100%;border-radius:6px}.vote-fill.a{background:var(--teal)}.vote-fill.b{background:var(--coral)}.big-stat{font-size:25px;font-weight:800}.text-sm{font-size:14px}.muted-sm{font-size:12px;color:#5d7180}.table-scroll{overflow-x:auto}.neighbour-table{width:100%;border-collapse:collapse;font-size:13px}.neighbour-table th,.neighbour-table td{text-align:left;padding:9px 11px;border-bottom:1px solid #e0e8ec}.neighbour-table th{background:#f0f6f7;font-weight:750;white-space:nowrap}.neighbour-table td:first-child{font-weight:700}.split{display:grid;grid-template-columns:1fr 1fr;gap:20px}.math-card{background:#fcfdfd;border:1px solid var(--border);border-radius:12px;padding:20px}.distance-illustration{display:block;max-width:100%;margin:14px auto}.method-list{margin:9px 0 0;padding-left:22px}.method-list li{margin:7px 0}.codebar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:13px 0}.codebar p{margin:0}pre{background:#142d40;color:#dcecf4;padding:23px;border-radius:12px;overflow:auto;font-size:13px;line-height:1.64;max-height:550px;white-space:pre;tab-size:4}code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}.result-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}.stat{background:#eef6f7;border:1px solid #d8e8eb;padding:14px 16px;border-radius:11px}.stat strong{display:block;color:#164860;font-size:27px;line-height:1.2}.stat small{font-size:12px}.validation-canvas{display:block;height:280px;width:100%;max-width:100%}details{border:1px solid #dce7e9;border-radius:10px;margin:9px 0;padding:13px 17px;background:#fcfdfd}summary{font-weight:700;cursor:pointer}details p{font-size:14px;color:#415566;margin:12px 0 0}.footer{padding:27px 18px 36px;text-align:center;font-size:13px;color:#607180}.footer a{font-weight:700}
+@media(max-width:920px){.hero-grid{grid-template-columns:1fr}.hero-aside{max-width:570px}.lab-layout{grid-template-columns:1fr}.control-panel{display:grid;grid-template-columns:repeat(2,1fr);gap:0 18px}.control-panel hr{grid-column:1/-1;width:100%}.control-panel .full{grid-column:1/-1}}
+@media(max-width:650px){.hero{padding:19px 18px 36px}.hero-grid{margin-top:25px}.hero h1{font-size:40px}.hero-aside{padding:15px}nav{justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;white-space:nowrap}nav a{font-size:12px;padding:6px 8px}main{padding:5px 11px 24px}section{padding:18px 15px;margin:12px 0}.three-steps,.split,.result-grid{grid-template-columns:1fr}.control-panel{display:block}.plot-wrap{padding:3px}.plot-wrap canvas{height:330px}.prediction-name{font-size:22px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="hero">
+ <div class="hero-inner">
+  <div class="brandbar"><a class="brand" href="./">◈ MLTools / OPEN TEACHING LABORATORY</a><a class="back" href="./">← All interactive labs</a></div>
+  <div class="hero-grid">
+   <div><div class="eyebrow">Interactive lab 02 · Supervised learning</div>
+    <h1>K-Nearest Neighbours, explained by doing.</h1>
+    <p class="lead">Move an unknown point through a landscape of examples. Watch the closest neighbours vote, the decision boundary change, and the mathematics become visible.</p>
+    <div class="actions"><a href="#lab">Launch the experiment ↓</a><a class="secondary" href="#distance">Understand the equation</a></div>
+   </div>
+   <div class="hero-aside">
+    <div class="mini-heading">A model with no training equation</div>
+    <div class="mini-vote"><div class="mini-dots"><i style="background:#167b9a"></i><i style="background:#167b9a"></i><i style="background:#e26b54"></i></div><span style="color:#dbedf2;font-size:14px">3 nearby examples</span></div>
+    <div style="font-weight:750;font-size:22px;color:white">2 votes to 1</div>
+    <div class="mini-caption">The majority label becomes the prediction. But what happens when K or the distance rule changes?</div>
+    <div class="mini-eq">Prediction = vote of the K closest labelled examples</div>
+   </div>
+  </div>
+ </div>
+</header>
+<nav aria-label="Lab sections"><a href="#intuition">01 · Intuition</a><a href="#lab">02 · Playground</a><a href="#distance">03 · Mathematics</a><a href="#choose-k">04 · Choosing K</a><a href="#python">05 · Python</a><a href="#questions">06 · Challenges</a></nav>
+<main>
+<section id="intuition">
+ <div class="tag">01 / Begin with a question</div>
+ <h2>How can a computer classify a flower it has never seen?</h2>
+ <p>Suppose a botanist has already measured and labelled 50 flowers. When a new flower arrives, we could look at the most similar flowers in the collection and ask: <strong>Which type appears most often among its closest neighbours?</strong></p>
+ <div class="three-steps">
+  <div class="step"><span class="step-num">STEP 1 · REMEMBER</span><h3>Keep the examples</h3><p>Each known flower has two measured features and a known category. KNN keeps these labelled examples.</p></div>
+  <div class="step"><span class="step-num">STEP 2 · COMPARE</span><h3>Find the nearest K</h3><p>Compute distances from the unknown flower to the examples, then select the K closest ones.</p></div>
+  <div class="step"><span class="step-num">STEP 3 · VOTE</span><h3>Make a prediction</h3><p>The most common category among those K neighbours wins. Ties are possible.</p></div>
+ </div>
+ <div class="callout"><strong>Key distinction:</strong> KNN is <em>supervised classification</em>, because the existing examples have labels. K-Means is <em>unsupervised clustering</em>, where K refers to cluster centres rather than neighbours.</div>
+</section>
+
+<section id="lab">
+ <div class="tag">02 / Live experiment</div>
+ <h2>Teach the point by moving it</h2>
+ <p>Start with flowers, then switch to the synthetic patient or study-habits examples. Click the plot to place an unknown observation. Change <strong>K</strong>, the <strong>distance metric</strong>, or <strong>feature scaling</strong> and watch the prediction change.</p>
+ <div class="lab-layout">
+  <div class="visual">
+   <div class="plot-wrap">
+    <canvas id="plot" role="img" aria-label="Interactive scatterplot of labelled examples, their decision regions, and the unknown point">Your browser needs HTML canvas support to show the interactive data plot.</canvas>
+    <p class="caption" id="plot-caption">Click or drag to place the unknown point.</p>
+    <div class="legend"><span><i class="dot a"></i><span id="legend-a">Setosa-like</span></span><span><i class="dot b"></i><span id="legend-b">Other iris</span></span><span><i class="unknown"></i>Unknown point</span></div>
+   </div>
+   <div class="prediction-card" aria-live="polite" aria-atomic="true">
+    <div class="prediction-top"><div id="prediction-swatch" class="prediction-swatch" style="background:#167b9a"></div><div><small>LIVE CLASSIFICATION</small><div id="prediction-name" class="prediction-name">Calculating…</div><div id="prediction-note" class="prediction-sub">Finding nearest examples</div></div></div>
+    <div class="vote-row"><div><div class="vote-label"><span id="votes-a-label"></span></div><div class="vote-track"><div class="vote-fill a" id="votes-a-bar" style="width:50%"></div></div></div><strong id="votes-a-num" class="big-stat">0</strong></div>
+    <div class="vote-row"><div><div class="vote-label"><span id="votes-b-label"></span></div><div class="vote-track"><div class="vote-fill b" id="votes-b-bar" style="width:50%"></div></div></div><strong id="votes-b-num" class="big-stat">0</strong></div>
+    <div class="button-row" style="margin-top:16px"><button id="next-neighbour" type="button" class="primary">Reveal next neighbour</button><span id="shown-count" class="muted-sm" style="align-self:center">All neighbours selected</span></div>
+    <p class="muted-sm" style="margin:10px 0 0">Tap “Reveal next neighbour” repeatedly to replay the voting process one neighbour at a time.</p>
+   </div>
+   <div id="clinical-note" hidden class="callout note"><strong>Teaching data only.</strong> The patient dataset and outcomes are entirely synthetic. This is not a medical survival predictor; real clinical prediction requires much more than two features and formal validation.</div>
+  </div>
+  <div class="control-panel">
+   <label class="full" for="example">Choose an intuitive example
+    <select id="example"><option value="flowers">🌸 Flowers: what species?</option><option value="patients">● Patients: illustrative outcomes</option><option value="study">📚 Study habits: pass or review?</option></select>
+   </label>
+   <label class="full" for="k">Number of neighbours K = <output id="k-output">5</output>
+    <input id="k" type="range" min="1" max="50" step="1" value="5">
+    <small>Try K = 1, K = 5, then K = all samples.</small>
+   </label>
+   <label for="metric">How do we measure closeness?
+    <select id="metric"><option value="euclidean">Euclidean (L2)</option><option value="manhattan">Manhattan (L1)</option></select>
+   </label>
+   <label for="scaling">Feature scaling
+    <select id="scaling"><option value="standard">Standardized (recommended)</option><option value="raw">Raw, original units</option></select>
+   </label>
+   <label for="weights">How does each neighbour vote?
+    <select id="weights"><option value="uniform">One neighbour, one vote</option><option value="distance">Closer neighbours weigh more</option></select>
+   </label>
+   <label for="mouse-mode">Clicking the chart will
+    <select id="mouse-mode"><option value="query">Move the unknown point</option><option value="add0">Add a blue labelled example</option><option value="add1">Add a coral labelled example</option></select>
+   </label>
+   <div class="full paired">
+    <label for="point-x"><span id="x-name">Sepal length (cm)</span><input id="point-x" type="number" min="0" max="100" step="0.1" value="5.75"></label>
+    <label for="point-y"><span id="y-name">Petal width (cm)</span><input id="point-y" type="number" min="0" max="100" step="0.1" value="1.06"></label>
+   </div>
+   <label class="check" for="show-boundary"><input id="show-boundary" type="checkbox" checked> Show decision boundary</label>
+   <label class="check" for="show-neighbours"><input id="show-neighbours" type="checkbox" checked> Highlight the nearest neighbours</label>
+   <hr>
+   <div class="button-row full"><button id="reset-data" type="button">↺ Reset this example</button><button id="export-csv" type="button">↓ Export data CSV</button></div>
+   <p class="muted-sm full">The colours show the predicted class at every location. K=1 gives detailed boundaries; large K produces smoother, more global predictions. Adding a labelled point changes the model immediately.</p>
+  </div>
+ </div>
+ <h3 style="margin-top:24px">What exactly were the closest points?</h3>
+ <div class="table-scroll"><table class="neighbour-table"><thead><tr><th>Rank</th><th>Known class</th><th>Feature 1</th><th>Feature 2</th><th>Distance</th></tr></thead><tbody id="nearest-rows"></tbody></table></div>
+ <p class="muted-sm" id="nearest-summary"></p>
+</section>
+
+<section id="distance">
+ <div class="tag">03 / Turn intuition into an equation</div>
+ <h2>Distance is a choice, not a universal truth</h2>
+ <p>Two observations have two coordinates. The gap between them can be measured along a straight line or by moving horizontally and vertically. Changing that rule can change which neighbours are selected.</p>
+ <div class="split">
+  <div class="math-card"><h3>Euclidean distance · L2</h3>
+   <svg class="distance-illustration" viewBox="0 0 270 155" width="270" height="155" aria-label="Right triangle, diagonal between points represents Euclidean distance">
+    <line x1="34" y1="128" x2="235" y2="128" stroke="#a5bbc5" stroke-width="2"/><line x1="235" y1="128" x2="235" y2="22" stroke="#a5bbc5" stroke-width="2" stroke-dasharray="5 4"/><line x1="34" y1="128" x2="235" y2="22" stroke="#e26b54" stroke-width="4"/><circle cx="34" cy="128" r="6" fill="#167b9a"/><circle cx="235" cy="22" r="6" fill="#e26b54"/><text x="108" y="141" font-size="13" fill="#506779">Δ feature 1</text><text x="246" y="81" font-size="12" fill="#506779">Δ 2</text><text x="111" y="69" font-size="14" fill="#b54835">d₂</text>
+   </svg>
+   <div class="eq">d₂(a,b) = √[(a₁ − b₁)² + (a₂ − b₂)²]</div>
+   <p class="text-sm">The shortest straight-line distance between two observations. Large coordinate differences are squared before combining.</p>
+  </div>
+  <div class="math-card"><h3>Manhattan distance · L1</h3>
+   <svg class="distance-illustration" viewBox="0 0 270 155" width="270" height="155" aria-label="Horizontal then vertical path between two points represents Manhattan distance">
+    <line x1="34" y1="128" x2="235" y2="128" stroke="#167b9a" stroke-width="4"/><line x1="235" y1="128" x2="235" y2="22" stroke="#167b9a" stroke-width="4"/><line x1="34" y1="128" x2="235" y2="22" stroke="#a5bbc5" stroke-width="2" stroke-dasharray="5 4"/><circle cx="34" cy="128" r="6" fill="#167b9a"/><circle cx="235" cy="22" r="6" fill="#e26b54"/><text x="104" y="144" font-size="13" fill="#506779">Δ feature 1</text><text x="241" y="81" font-size="12" fill="#506779">Δ 2</text><text x="104" y="115" font-size="14" fill="#167b9a">d₁ = horizontal + vertical</text>
+   </svg>
+   <div class="eq">d₁(a,b) = |a₁ − b₁| + |a₂ − b₂|</div>
+   <p class="text-sm">The total distance travelled along the coordinate axes. Imagine walking through a rectangular city grid.</p>
+  </div>
+ </div>
+ <h3 style="margin-top:25px">Calculate the distance for your current unknown point</h3>
+ <div class="eq"><span id="metric-equation">d(a,b) = ...</span><small id="worked-example">The nearest-neighbour calculation appears here when the app loads.</small></div>
+ <p id="distance-note"></p>
+ <p id="weight-note" class="muted"></p>
+ <div class="callout note"><strong>Try this:</strong> Select the synthetic patient example, toggle scaling between <em>Raw</em> and <em>Standardized</em>, and observe which neighbours are highlighted. A one-year age difference and a one-node difference have different physical meanings; mathematics does not choose their relative importance for us.</div>
+ <div class="eq">KNN prediction: ŷ(x) = majority class among N<sub>K</sub>(x)<small>N<sub>K</sub>(x) means the set of K closest labelled observations to x under the selected distance rule.</small></div>
+</section>
+
+<section id="choose-k">
+ <div class="tag">04 / From memorisation to generalisation</div>
+ <h2>Which value of K should we choose?</h2>
+ <div class="split">
+  <div><h3>K = 1</h3><p>Every stored example can influence a tiny neighbourhood. Predictions can become sensitive to noise and isolated examples, giving very jagged decision boundaries.</p></div>
+  <div><h3>K = all</h3><p>Every prediction uses the entire labelled dataset. With uniform voting, all unknown points receive the global majority class, so local structure disappears.</p></div>
+ </div>
+ <div class="callout"><strong>Instead of guessing K, evaluate candidate values.</strong> The plot below uses <em>leave-one-out validation</em>: remove one labelled example, predict it using the others, and repeat for all observations. The plotted accuracy is a validation estimate, <em>not</em> an independent test score.</div>
+ <div class="plot-wrap"><canvas class="validation-canvas" id="validation-plot" role="img" aria-label="Leave-one-out validation accuracy versus number of nearest neighbours K"></canvas></div>
+ <div class="result-grid"><div class="stat"><small>Best K in this experiment</small><strong id="best-k">…</strong></div><div class="stat"><small>Validation accuracy at best K</small><strong id="best-score">…</strong></div><div class="stat"><small>Accuracy at selected K</small><strong id="current-score">…</strong></div></div>
+ <div class="button-row"><button id="best-apply" class="primary" type="button">Use validation-selected K ↑</button></div>
+ <p class="text-sm muted" style="margin-top:12px">The chart compares K=1…25 when sufficient samples exist. The winner depends on this particular synthetic dataset, the distance metric, weighting and scaling. In a serious study, perform preprocessing separately inside each validation fold and reserve untouched test data for final evaluation.</p>
+ <div class="split">
+  <div class="math-card"><h3>Is K ≈ √n always correct?</h3><p>No. The square-root rule is a rough heuristic, not an optimality theorem. Dataset geometry, label noise, number of features and chosen distance all matter.</p></div>
+  <div class="math-card"><h3>Should K always be odd?</h3><p>Odd K avoids simple equal-count ties for two-class uniform voting when each neighbour has one vote. It does not guarantee good accuracy or prevent every possible tie under other schemes.</p></div>
+ </div>
+</section>
+
+<section id="python">
+ <div class="tag">05 / Bridge from concepts to Python</div>
+ <h2>The exact same experiment in scikit-learn</h2>
+ <p>Download the CSV from the playground and upload it to <a href="https://colab.research.google.com/" target="_blank" rel="noopener noreferrer">Google Colab</a>. This code is automatically updated when you change K, metric, voting rule, scaling or the unknown point.</p>
+ <div class="codebar"><p class="muted-sm">Uses a held-out test split. For scaled models, the scaler is fitted <strong>only</strong> on training data.</p><button id="copy-python" class="primary" type="button">Copy Python code</button></div>
+ <pre><code id="python-code"># Python code will appear when the interactive lab loads.</code></pre>
+ <p class="muted-sm">The code may produce a slightly different individual prediction because it trains on a subset rather than all the examples shown in the interactive plot. This is deliberate: the held-out data are needed for fair model evaluation.</p>
+ <div class="callout"><strong>KNN is a lazy learner:</strong> fitting usually stores training examples instead of learning a small set of coefficients. Prediction can be comparatively expensive because it needs distance calculations, though indexes and approximate search methods can accelerate queries.</div>
+</section>
+
+<section id="questions">
+ <div class="tag">06 / Think, predict, test</div>
+ <h2>Five small challenges for students</h2>
+ <p>Before opening each explanation, change the controls in the experiment and predict what will happen. The correct answers should come from observing the model, not memorising a rule.</p>
+ <details><summary>Q1 · Why does K = 1 create a jagged boundary?</summary><p>With only one neighbour, a single nearby point can change a prediction. Small islands form around individual observations. This flexibility can capture detail but can also fit noise.</p></details>
+ <details><summary>Q2 · Why can K = all ignore the unknown point's location?</summary><p>Under uniform voting, every prediction uses the same set of all training examples. Whichever class occurs more frequently wins everywhere. With distance-weighted votes, location can still matter.</p></details>
+ <details><summary>Q3 · Will multiplying all age measurements by 10 always preserve KNN predictions?</summary><p>No. In raw Euclidean or Manhattan distance, age then contributes more relative to the other feature, potentially changing which neighbours are nearest. Standardizing with training statistics removes the effect of a simple positive unit rescaling of a feature.</p></details>
+ <details><summary>Q4 · Does odd K guarantee a better classifier?</summary><p>No. Odd K may avoid equal-count ties in two-class uniform voting, but it does not guarantee good predictions. Choose K using an appropriate validation method.</p></details>
+ <details><summary>Q5 · What is the difference between KNN and K-Means?</summary><p>KNN uses existing labels to predict a label for an unknown point. K-Means does not require class labels; it partitions points into K clusters by repeatedly assigning points to cluster centres and updating those centres.</p></details>
+</section>
+</main>
+<footer class="footer">MLTools · Interactive Machine Learning Laboratory · Synthetic teaching examples · <a href="./">Explore all labs</a> · <a href="https://kirtiprakash.github.io/aru-cjlu-ai-2026/modules/advanced-machine-learning.html">Course portal</a></footer>
+<script src="knn.js"></script>
+</body>
+</html>
