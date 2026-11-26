@@ -80,6 +80,10 @@ main{max-width:1180px;margin:auto;padding:12px 20px 42px}section{margin:23px 0;p
     <input id="k" type="range" min="1" max="50" step="1" value="5">
     <small>Try K = 1, K = 5, then K = all samples.</small>
    </label>
+   <label class="full" for="noise">Extra label noise = <output id="noise-output">8%</output>
+    <input id="noise" type="range" min="0" max="30" step="2" value="8">
+    <small>Intentionally flip some known labels. Watch what happens when examples are not perfectly reliable.</small>
+   </label>
    <label for="metric">How do we measure closeness?
     <select id="metric"><option value="euclidean">Euclidean (L2)</option><option value="manhattan">Manhattan (L1)</option></select>
    </label>
@@ -144,10 +148,15 @@ main{max-width:1180px;margin:auto;padding:12px 20px 42px}section{margin:23px 0;p
   <div><h3>K = all</h3><p>Every prediction uses the entire labelled dataset. With uniform voting, all unknown points receive the global majority class, so local structure disappears.</p></div>
  </div>
  <div class="callout"><strong>Instead of guessing K, evaluate candidate values.</strong> The plot below uses <em>leave-one-out validation</em>: remove one labelled example, predict it using the others, and repeat for all observations. The plotted accuracy is a validation estimate, <em>not</em> an independent test score.</div>
- <div class="plot-wrap"><canvas class="validation-canvas" id="validation-plot" role="img" aria-label="Leave-one-out validation accuracy versus number of nearest neighbours K"></canvas></div>
+ <div class="plot-wrap">
+  <div class="legend" style="margin:5px 8px 0"><span><i class="dot a"></i>Training accuracy (seen data)</span><span><i class="dot b"></i>Leave-one-out validation (unseen point)</span><span><i class="unknown" style="border-color:#257b4b"></i>Best validated K</span></div>
+  <canvas class="validation-canvas" id="validation-plot" role="img" aria-label="Training and leave-one-out validation accuracy as a function of K; click the graph to choose K"></canvas>
+  <p class="muted-sm" style="margin:5px 8px 3px">Click anywhere along the chart to select K. Compare the blue training curve with the orange validation curve.</p>
+ </div>
+ <p class="callout" id="cv-reading" aria-live="polite">The validation experiment will appear when the dataset loads.</p>
  <div class="result-grid"><div class="stat"><small>Best K in this experiment</small><strong id="best-k">…</strong></div><div class="stat"><small>Validation accuracy at best K</small><strong id="best-score">…</strong></div><div class="stat"><small>Accuracy at selected K</small><strong id="current-score">…</strong></div></div>
  <div class="button-row"><button id="best-apply" class="primary" type="button">Use validation-selected K ↑</button></div>
- <p class="text-sm muted" style="margin-top:12px">The chart compares K=1…25 when sufficient samples exist. The winner depends on this particular synthetic dataset, the distance metric, weighting and scaling. In a serious study, perform preprocessing separately inside each validation fold and reserve untouched test data for final evaluation.</p>
+ <p class="text-sm muted" style="margin-top:12px">The chart compares K=1…25 when sufficient samples exist. The synthetic labels intentionally include some overlap and optional noise so different K values have meaningfully different performance. A tie is counted as a missed classification. The displayed maximum is a model-selection estimate, not an unbiased final test score. In a serious study, perform preprocessing separately inside each validation fold, avoid tuning on the test set, and reserve untouched test data for final evaluation.</p>
  <div class="split">
   <div class="math-card"><h3>Is K ≈ √n always correct?</h3><p>No. The square-root rule is a rough heuristic, not an optimality theorem. Dataset geometry, label noise, number of features and chosen distance all matter.</p></div>
   <div class="math-card"><h3>Should K always be odd?</h3><p>Odd K avoids simple equal-count ties for two-class uniform voting when each neighbour has one vote. It does not guarantee good accuracy or prevent every possible tie under other schemes.</p></div>
@@ -176,6 +185,6 @@ main{max-width:1180px;margin:auto;padding:12px 20px 42px}section{margin:23px 0;p
 </section>
 </main>
 <footer class="footer">MLTools · Interactive Machine Learning Laboratory · Synthetic teaching examples · <a href="./">Explore all labs</a> · <a href="https://kirtiprakash.github.io/aru-cjlu-ai-2026/modules/advanced-machine-learning.html">Course portal</a></footer>
-<script src="knn.js"></script>
+<script src="knn.js?v=2"></script>
 </body>
 </html>
